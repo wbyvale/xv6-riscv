@@ -141,10 +141,12 @@ UPROGS=\
 	$U/_zombie\
 	$U/_logstress\
 	$U/_forphan\
-	$U/_dorphan\
+	$U/_dorphan
+
+UPROGS += $U/_yosoytupadre
 
 fs.img: mkfs/mkfs README $(UPROGS)
-	mkfs/mkfs fs.img README $(UPROGS)
+	./mkfs/mkfs fs.img README $(UPROGS)
 
 -include kernel/*.d user/*.d
 

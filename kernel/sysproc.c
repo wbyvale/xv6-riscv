@@ -105,3 +105,45 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+uint64
+sys_getppid(void)
+{
+  struct proc *p = myproc();
+  int ppid = -1;
+
+  acquire(&p->lock);
+  if (p->parent)
+    ppid = p->parent->pid;   // si tiene padre, devuelve su pid
+  release(&p->lock);
+
+  return ppid;
+}
+
+uint64
+sys_getancestor(void)
+{
+  int n;
+
+  // Separar la validación ayuda y evita problemas si faltaba el prototipo
+  if (argint(0, &n) < 0)
+    return -1;
+  if (n < 0)
+    return -1;
+
+  struct proc *cur = myproc();
+
+  for (int i = 0; i < n; i++) {
+    acquire(&cur->lock);
+    struct proc *par = cur->parent;
+    release(&cur->lock);
+    if (par == 0)
+      return -1;
+    cur = par;
+  }
+
+  acquire(&cur->lock);
+  int pid = cur->pid;
+  release(&cur->lock);
+  return pid;
+}
+

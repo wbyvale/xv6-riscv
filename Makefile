@@ -143,6 +143,8 @@ UPROGS=\
 	$U/_forphan\
 	$U/_dorphan\
 	$U/_demo\
+	$U/_ps\
+
 
 
 UPROGS += $U/_yosoytupadre

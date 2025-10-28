@@ -163,3 +163,12 @@ sys_pause(void)
   // sys_sleep ya lee el arg0 con argint(), así que funciona igual
   return sys_sleep();
 }
+
+extern void procdump(void);
+
+uint64
+sys_procdump(void)
+{
+  procdump();
+  return 0;
+}

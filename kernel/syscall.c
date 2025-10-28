@@ -108,6 +108,7 @@ extern uint64 sys_getppid(void);
 extern uint64 sys_getancestor(void);
 extern uint64 sys_sleep(void);
 extern uint64 sys_settickets(void);
+extern uint64 sys_procdump(void);
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -138,6 +139,7 @@ static uint64 (*syscalls[])(void) = {
 [SYS_getancestor] sys_getancestor,
 [SYS_sleep]      sys_sleep,
 [SYS_settickets] sys_settickets,
+[SYS_procdump]  sys_procdump,
 };
 
 void

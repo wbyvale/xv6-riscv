@@ -28,6 +28,7 @@ int getppid(void);
 int getancestor(int n);
 int sleep(int);
 int settickets(int);
+int procdump(void);
 
 
 // ulib.c

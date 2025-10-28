@@ -141,7 +141,9 @@ UPROGS=\
 	$U/_zombie\
 	$U/_logstress\
 	$U/_forphan\
-	$U/_dorphan
+	$U/_dorphan\
+	$U/_demo\
+
 
 UPROGS += $U/_yosoytupadre
 

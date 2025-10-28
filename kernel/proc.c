@@ -123,6 +123,8 @@ allocproc(void)
 
 found:
   p->pid = allocpid();
+  p->tickets = 100;     // valor por defecto
+  p->cpu_slices = 0;    // contador inicial
   p->state = USED;
 
   // Allocate a trapframe page.
@@ -410,6 +412,24 @@ kwait(uint64 addr)
     sleep(p, &wait_lock);  //DOC: wait-sleep
   }
 }
+// --- PRNG simple para el scheduler (no criptográfico) ---
+static uint64 rnd_seed = 88172645463393265ULL;
+
+// LCG clásico (Numerical Recipes)
+static inline uint64
+krand(void)
+{
+  rnd_seed = rnd_seed * 6364136223846793005ULL + 1;
+  return rnd_seed;
+}
+
+// Opcional: permite “sembrar” el PRNG con algún valor
+static inline void
+kseed(uint64 s)
+{
+  if(s) rnd_seed = s;
+}
+
 
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -421,51 +441,58 @@ kwait(uint64 addr)
 void
 scheduler(void)
 {
-  struct proc *p;
   struct cpu *c = mycpu();
-
   c->proc = 0;
+
   for(;;){
-    // The most recent process to run may have had interrupts
-    // turned off; enable them to avoid a deadlock if all
-    // processes are waiting. Then turn them back off
-    // to avoid a possible race between an interrupt
-    // and wfi.
     intr_on();
-    intr_off();
 
-    int found = 0;
-    for(p = proc; p < &proc[NPROC]; p++) {
+    // -------- 1) Sumar tickets de RUNNABLE --------
+    int total = 0;
+    struct proc *p;
+
+    for(p = proc; p < &proc[NPROC]; p++){
       acquire(&p->lock);
-      if(p->state == RUNNABLE) {
-        // Switch to chosen process.  It is the process's job
-        // to release its lock and then reacquire it
-        // before jumping back to us.
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->context, &p->context);
-
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
-        found = 1;
+      if(p->state == RUNNABLE){
+        if(p->tickets < 1) p->tickets = 1; // robustez
+        total += p->tickets;
       }
       release(&p->lock);
     }
-    if(found == 0) {
-      // nothing to run; stop running on this core until an interrupt.
-      asm volatile("wfi");
+
+    if(total == 0){
+      // nadie listo; vuelve a iterar
+      continue;
     }
+
+    // -------- 2) Sorteo: r ∈ [1, total] --------
+    int r = (int)(krand() % total) + 1;
+
+    // -------- 3) Buscar ganador por acumulación --------
+    int acc = 0;
+    for(p = proc; p < &proc[NPROC]; p++){
+      acquire(&p->lock);
+      if(p->state == RUNNABLE){
+        acc += p->tickets;
+        if(acc >= r){
+          // ganador: ejecutarlo
+          p->cpu_slices++;       // contabilidad
+          p->state = RUNNING;
+          c->proc = p;
+          swtch(&c->context, &p->context);
+          c->proc = 0;
+
+          release(&p->lock);
+          break; // volver a empezar el ciclo externo
+        }
+      }
+      release(&p->lock);
+    }
+    // si por carrera no se eligió (p cambió de estado),
+    // el loop externo repetirá y sorteará de nuevo.
   }
 }
 
-// Switch to scheduler.  Must hold only p->lock
-// and have changed proc->state. Saves and restores
-// intena because intena is a property of this
-// kernel thread, not this CPU. It should
-// be proc->intena and proc->noff, but that would
-// break in the few places where a lock is held but
-// there's no process.
 void
 sched(void)
 {
@@ -681,7 +708,7 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    printf("%d %s %s", p->pid, state, p->name);
-    printf("\n");
+    printf("%d %s %s tickets=%d slices=%d\n",
+      p->pid, state, p->name, p->tickets, (int)p->cpu_slices);
   }
 }

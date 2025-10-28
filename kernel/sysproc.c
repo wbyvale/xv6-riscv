@@ -63,7 +63,7 @@ sys_sbrk(void)
 }
 
 uint64
-sys_pause(void)
+sys_sleep(void)
 {
   int n;
   uint ticks0;
@@ -147,3 +147,19 @@ sys_getancestor(void)
   return pid;
 }
 
+uint64
+sys_settickets(void)
+{
+  int n;
+  if(argint(0, &n) < 0) return -1;
+  if(n < 1) n = 1;
+  myproc()->tickets = n;
+  return 0;
+}
+// Wrapper para compatibilidad con tablas que aún usan sys_pause
+uint64
+sys_pause(void)
+{
+  // sys_sleep ya lee el arg0 con argint(), así que funciona igual
+  return sys_sleep();
+}

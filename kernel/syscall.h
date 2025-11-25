@@ -25,4 +25,7 @@
 #define SYS_settickets   24   // <-- usa el consecutivo que toque en TU archivo
 #define SYS_sleep 25
 #define SYS_procdump 26
+#define SYS_mrdprotect   27
+#define SYS_munrdprotect 28
+
 

@@ -135,6 +135,10 @@ int            argaddr(int, uint64 *);
 int             fetchstr(uint64, char*, int);
 int             fetchaddr(uint64, uint64*);
 void            syscall();
+// nuevas syscalls
+uint64          sys_mrdprotect(void);
+uint64          sys_munrdprotect(void);
+
 
 // trap.c
 extern uint     ticks;
@@ -169,6 +173,10 @@ int             copyin(pagetable_t, char *, uint64, uint64);
 int             copyinstr(pagetable_t, char *, uint64, uint64);
 int             ismapped(pagetable_t, uint64);
 uint64          vmfault(pagetable_t, uint64, int);
+//T3 modificacion
+int             mrdprotect(void *addr, int len);
+int             munrdprotect(void *addr, int len);
+
 
 // plic.c
 void            plicinit(void);

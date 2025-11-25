@@ -81,6 +81,39 @@ argstr(int n, char *buf, int max)
   return fetchstr(addr, buf, max);
 }
 
+uint64
+sys_mrdprotect(void)
+{
+  uint64 addr;
+  int len;
+
+  // arg 0: puntero addr
+  if (argaddr(0, &addr) < 0)
+    return -1;
+
+  // arg 1: entero len
+  if (argint(1, &len) < 0)
+    return -1;
+
+  // llama a la función "real" en el kernel (que vas a definir en vm.c)
+  return mrdprotect((void*)addr, len);
+}
+
+uint64
+sys_munrdprotect(void)
+{
+  uint64 addr;
+  int len;
+
+  if (argaddr(0, &addr) < 0)
+    return -1;
+
+  if (argint(1, &len) < 0)
+    return -1;
+
+  return munrdprotect((void*)addr, len);
+}
+
 // Prototypes for the functions that handle system calls.
 extern uint64 sys_settickets(void);
 extern uint64 sys_fork(void);
@@ -140,6 +173,8 @@ static uint64 (*syscalls[])(void) = {
 [SYS_sleep]      sys_sleep,
 [SYS_settickets] sys_settickets,
 [SYS_procdump]  sys_procdump,
+[SYS_mrdprotect]   sys_mrdprotect,
+[SYS_munrdprotect] sys_munrdprotect,
 };
 
 void

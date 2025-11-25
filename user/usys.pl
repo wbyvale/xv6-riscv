@@ -47,3 +47,5 @@ entry("getancestor");
 entry("settickets");
 entry("sleep");
 entry("procdump");
+entry("mrdprotect");
+entry("munrdprotect");

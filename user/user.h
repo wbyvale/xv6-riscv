@@ -29,6 +29,9 @@ int getancestor(int n);
 int sleep(int);
 int settickets(int);
 int procdump(void);
+int mrdprotect(void *addr, int len);
+int munrdprotect(void *addr, int len);
+
 
 
 // ulib.c

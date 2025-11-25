@@ -144,6 +144,11 @@ UPROGS=\
 	$U/_dorphan\
 	$U/_demo\
 	$U/_ps\
+	$U/_rdprotect_test\
+	$U/_rdp_ok\
+	$U/_rdp_errortest\
+
+
 
 
 

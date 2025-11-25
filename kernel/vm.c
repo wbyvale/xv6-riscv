@@ -484,3 +484,78 @@ ismapped(pagetable_t pagetable, uint64 va)
   }
   return 0;
 }
+int
+mrdprotect(void *addr, int len)
+{
+  struct proc *p = myproc();
+  pagetable_t pagetable = p->pagetable;
+  uint64 va = (uint64)addr;
+
+  if (len <= 0)
+    return -1;
+
+  if (va % PGSIZE != 0)
+    return -1;
+
+  // Primer pase: validar todas las paginas
+  for (int i = 0; i < len; i++) {
+    uint64 a = va + (uint64)i * PGSIZE;
+    pte_t *pte = walk(pagetable, a, 0);
+    if (pte == 0)
+      return -1;
+    if ((*pte & PTE_V) == 0)
+      return -1;
+    if ((*pte & PTE_U) == 0)
+      return -1; // no tocar kernel
+  }
+
+  // Segundo pase: quitar bit de lectura
+  for (int i = 0; i < len; i++) {
+    uint64 a = va + (uint64)i * PGSIZE;
+    pte_t *pte = walk(pagetable, a, 0);
+    *pte &= ~PTE_R;
+  }
+
+  sfence_vma();
+  return 0;
+}
+
+int
+munrdprotect(void *addr, int len)
+{
+    struct proc *p = myproc();
+    pagetable_t pagetable = p->pagetable;
+    uint64 va = (uint64)addr;
+
+    // 1. Chequeos básicos
+    if (len <= 0)
+        return -1;
+
+    // dirección alineada a página
+    if (va % PGSIZE != 0)
+        return -1;
+
+    // 2. Primer pase: validar TODAS las páginas
+    for (int i = 0; i < len; i++) {
+        uint64 a = va + (uint64)i * PGSIZE;
+        pte_t *pte = walk(pagetable, a, 0);
+        if (pte == 0)
+            return -1;
+        if ((*pte & PTE_V) == 0)
+            return -1;
+        if ((*pte & PTE_U) == 0)
+            return -1; // no tocar memoria del kernel
+    }
+
+    // 3. Segundo pase: volver a activar el bit de lectura
+    for (int i = 0; i < len; i++) {
+        uint64 a = va + (uint64)i * PGSIZE;
+        pte_t *pte = walk(pagetable, a, 0);
+        *pte |= PTE_R;      // SOLO prendes PTE_R, no cambias los otros bits
+    }
+
+    // 4. Limpiar TLB
+    sfence_vma();
+
+    return 0;
+}
